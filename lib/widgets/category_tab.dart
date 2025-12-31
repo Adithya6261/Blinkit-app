@@ -17,7 +17,7 @@ class BlinkitCategoryTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap, 
+      onTap: onTap,
       child: SizedBox(
         width: 70,
         height: 58,
@@ -52,4 +52,3 @@ class BlinkitCategoryTab extends StatelessWidget {
     );
   }
 }
-

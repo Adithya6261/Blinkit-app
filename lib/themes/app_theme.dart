@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static const Color blinkitGreen = Color(0xFF00A699);
-  static const Color blinkitYellow = Color(0xFFFFE600);
+  static const Color blinkitYellow = Color.fromARGB(255, 252, 237, 100);
 
   static const Color headerPink = Color(0xFFFFE8ED);
   static const Color headerPinkDark = Color(0xFFFFCEDA);

@@ -1,5 +1,3 @@
-// File: product_card.dart
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../models/product_model.dart';
@@ -20,47 +18,7 @@ class ProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 150,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-              color: Colors.grey.shade200,
-              image: DecorationImage(
-                image: ResizeImage.resizeIfNeeded(
-                  200,
-                  200,
-                  CachedNetworkImageProvider(item.imageUrl),
-                ),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.favorite_border,
-                      size: 16,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ADD BUTTON
+          _productImage(),
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             height: 30,
@@ -79,8 +37,6 @@ class ProductCard extends StatelessWidget {
               ),
             ),
           ),
-
-          // PRODUCT DETAILS
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
             child: Column(
@@ -167,6 +123,63 @@ class ProductCard extends StatelessWidget {
                   ],
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _productImage() {
+    final bool isAsset = item.imageUrl.startsWith('assets/');
+
+    return Container(
+      height: 150,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
+        ),
+        color: Colors.grey.shade200,
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
+            child: isAsset
+                ? Image.asset(
+                    item.imageUrl,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                  )
+                : CachedNetworkImage(
+                    imageUrl: item.imageUrl,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    placeholder: (_, __) => const Center(child: CircularProgressIndicator(strokeWidth: 1)),
+                    errorWidget: (_, __, ___) => const Icon(Icons.image_not_supported),
+                  ),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.favorite_border,
+                size: 16,
+                color: Colors.black87,
+              ),
             ),
           ),
         ],

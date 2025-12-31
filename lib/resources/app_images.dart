@@ -11,4 +11,9 @@ class AppImages {
   static String blinkitWallet = 'assets/blinkit_wallet.svg';
   static String blinkitWedding = 'assets/blinkit_wedding.svg';
   static String blinkitWinter = 'assets/blinkit_winter.svg';
+  static String blinkitIcon = 'assets/blinkit_logo.png';
+  static String cake = 'assets/cake.jpg';
+  static String fruit = 'assets/fruit.jpg';
+  static String plant = 'assets/plant.jpg';
+  static String vegetable = 'assets/vegetable.jpg';
 }

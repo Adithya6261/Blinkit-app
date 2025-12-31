@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import '../data/categories_data.dart';
 import '../data/products_data.dart';
 import '../models/product_model.dart';
+import '../themes/app_theme.dart';
+
+enum HomeTab { home, orderAgain, categories, print }
 
 class HomeController extends GetxController {
   final categories = CategoriesData.categories.obs;
@@ -12,24 +16,23 @@ class HomeController extends GetxController {
   final ScrollController mainScrollController = ScrollController();
 
   final List<GlobalKey> contentKeys = [];
+  final List<GlobalKey> categoryKeys = [];
 
   final RxMap<int, List<ProductModel>> products = <int, List<ProductModel>>{}.obs;
 
-  
   final selectedTabIndex = 0.obs;
+  final currentTab = HomeTab.home.obs;
   final isBottomNavVisible = true.obs;
 
   double _lastOffset = 0;
-  final isLoading = true.obs;
 
-  
   @override
   void onInit() {
     super.onInit();
-    
-    
+
     for (int i = 0; i < categories.length; i++) {
       contentKeys.add(GlobalKey());
+      categoryKeys.add(GlobalKey());
       products[i] = ProductsData.productsForCategory(i);
     }
 
@@ -43,92 +46,125 @@ class HomeController extends GetxController {
     super.onClose();
   }
 
-  
-  // HIDE/SHOW BOTTOM NAV
-  
   void _onMainScroll() {
     final offset = mainScrollController.offset;
 
     if (offset > _lastOffset + 4) {
-      if (isBottomNavVisible.value) isBottomNavVisible.value = false;
+      if (isBottomNavVisible.value) {
+        isBottomNavVisible.value = false;
+      }
     } else if (offset < _lastOffset - 4) {
-      if (!isBottomNavVisible.value) isBottomNavVisible.value = true;
+      if (!isBottomNavVisible.value) {
+        isBottomNavVisible.value = true;
+      }
     }
 
     _lastOffset = offset;
   }
 
-  
-  // CATEGORY SELECTION + SCROLL
-  
   void selectCategory(int index) {
     selectedCategoryIndex.value = index;
 
-    const double itemWidth = 70;
-    const double spacing = 10;
+    if (!categoryController.hasClients) return;
 
-    double itemTotalWidth = itemWidth + spacing;
-    final screenWidth = Get.width;
+    final ctx = categoryKeys[index].currentContext;
+    if (ctx == null) return;
 
-    
-    double targetOffset = index * itemTotalWidth - (screenWidth - itemWidth) / 2;
+    final RenderBox itemBox = ctx.findRenderObject() as RenderBox;
+    final RenderBox listBox = categoryController.position.context.storageContext.findRenderObject() as RenderBox;
 
-    
-    if (categoryController.hasClients) {
-      final maxScroll = categoryController.position.maxScrollExtent;
-      targetOffset = targetOffset.clamp(0.0, maxScroll);
+    final Offset itemPos = itemBox.localToGlobal(Offset.zero, ancestor: listBox);
 
-      categoryController.animateTo(
-        targetOffset,
-        duration: const Duration(milliseconds: 260),
-        curve: Curves.easeInOut,
-      );
-    }
+    final double itemCenter = itemPos.dx + itemBox.size.width / 2;
+    final double viewportCenter = listBox.size.width / 2;
 
-    // Scroll main content
+    double targetOffset = categoryController.offset + itemCenter - viewportCenter;
+
+    final max = categoryController.position.maxScrollExtent;
+    final min = categoryController.position.minScrollExtent;
+
+    targetOffset = targetOffset.clamp(min, max);
+
+    categoryController.animateTo(
+      targetOffset,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+    );
+
     jumpToContent(index);
   }
 
+ void jumpToContent(int index) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = contentKeys[index].currentContext;
 
+      if (context == null) {
+        // Force approximate scroll first so Flutter builds the item
+        final estimatedOffset = index * 380.0; // avg section height
+        mainScrollController.jumpTo(
+          estimatedOffset.clamp(
+            mainScrollController.position.minScrollExtent,
+            mainScrollController.position.maxScrollExtent,
+          ),
+        );
 
-  
-  // SCROLL TO PRODUCT SECTION
- 
-  void jumpToContent(int index) {
-    if (!mainScrollController.hasClients) return;
+        // Retry after build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final retryContext = contentKeys[index].currentContext;
+          if (retryContext != null) {
+            Scrollable.ensureVisible(
+              retryContext,
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOutCubic,
+              alignment: 0.0,
+            );
+          }
+        });
 
-    final key = contentKeys[index];
-    final context = key.currentContext;
-    if (context == null) return;
+        return;
+      }
 
-    
-    final box = context.findRenderObject() as RenderBox;
-
-    
-    final position = box.localToGlobal(Offset.zero).dy;
-
-    // Height of pinned header (search + categories)
-    const double pinnedHeight = 120;
-
-    // Current scroll  
-    final currentOffset = mainScrollController.offset;
-
-    // Calculate final target 
-    final targetOffset = currentOffset + position - pinnedHeight;
-
-    
-    mainScrollController.animateTo(
-      targetOffset,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-    );
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+        alignment: 0.0,
+      );
+    });
   }
-
-
-
 
   List<ProductModel> productsFor(int index) => products[index] ?? [];
 
+  void selectTab(int index) {
+    selectedTabIndex.value = index;
+    currentTab.value = HomeTab.values[index];
+  }
 
-  void selectTab(int index) => selectedTabIndex.value = index;
+  Color get headerColor {
+    switch (currentTab.value) {
+      case HomeTab.orderAgain:
+        return const Color(0xFFFFE8ED);
+      case HomeTab.categories:
+        return const Color(0xFFE3F2FD);
+      case HomeTab.print:
+        return const Color(0xFFE8F5E9);
+      case HomeTab.home:
+      default:
+        return AppTheme.blinkitYellow;
+    }
+  }
+
+  Color get sectionBgColor {
+    switch (currentTab.value) {
+      case HomeTab.orderAgain:
+        return const Color(0xFFFFF1F5);
+      case HomeTab.categories:
+        return const Color(0xFFF5FAFF);
+      case HomeTab.print:
+        return const Color(0xFFF1FFF4);
+      case HomeTab.home:
+      default:
+        return Colors.white;
+    }
+  }
 }

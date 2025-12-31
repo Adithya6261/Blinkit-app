@@ -1,20 +1,45 @@
+import 'package:blinkit/resources/app_images.dart';
+
 import '../models/product_model.dart';
 
 class ProductsData {
-  // Single image URL for all products to reduce shader compilation
-  static const String defaultImageUrl = 'https://picsum.photos/seed/product/400/400';
+  static List<Map<String, String>> groceryItems = [
+    {
+      "title": "Vegetables",
+      "image": AppImages.vegetable,
+      "unit": "500g",
+    },
+    {
+      "title": "Fruits",
+      "image": AppImages.fruit,
+      "unit": "1kg",
+    },
+    {
+      "title": "Cakes",
+      "image": AppImages.cake,
+      "unit": "1 pc",
+    },
+    {
+      "title": "Plants",
+      "image": AppImages.plant,
+      "unit": "1 pc",
+    },
+  ];
 
   static List<ProductModel> productsForCategory(int categoryIndex) {
     final base = categoryIndex * 10;
+
     return List.generate(12, (index) {
       final id = base + index + 1;
+      final item = groceryItems[index % groceryItems.length];
+
       return ProductModel(
         id: id.toString(),
-        title: 'Product $id',
+        title: item["title"]!,
         price: (20 + id * 2).toString(),
-        imageUrl: defaultImageUrl,
-        unit: '250g',
-        category: 'Category ${categoryIndex + 1}',
+        imageUrl: item["image"]!,
+        unit: item["unit"]!,
+        category: item["title"]!,
         rating: 4.5,
         ratingCount: 100,
         mrp: (30 + id * 2).toString(),
